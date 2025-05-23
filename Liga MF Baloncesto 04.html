@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor Liga de Baloncesto CAÑAHUEQUEROS</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #e9ecef; color: #343a40; }
+        .container { max-width: 1000px; margin: auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1, h2, h3 { color: #0056b3; text-align: center; }
+        h1 { font-size: 2.8em; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
+        h2 { font-size: 1.8em; border-bottom: 3px solid #ffc107; padding-bottom: 8px; margin-top: 35px; }
+        h3 { font-size: 1.4em; margin-top: 25px; color: #17a2b8; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.95em; }
+        th, td { border: 1px solid #dee2e6; padding: 10px 12px; text-align: left; }
+        th { background-color: #007bff; color: white; text-transform: uppercase; font-size: 0.85em; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #e2e6ea; }
+        .admin-section, .login-section, .setup-section { margin-top: 30px; padding: 20px; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 6px; }
+        input[type="text"], input[type="password"], input[type="number"], input[type="date"], input[type="time"], select {
+            padding: 10px; margin: 5px 5px 10px 0; border: 1px solid #ced4da; border-radius: 4px; width: calc(100% - 22px); max-width: 250px; box-sizing: border-box;
+        }
+        button, .button {
+            padding: 10px 18px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; font-size: 1em; margin-right: 8px;
+        }
+        button:hover, .button:hover { background-color: #218838; }
+        #logoutBtn, .danger-btn { background-color: #dc3545; }
+        #logoutBtn:hover, .danger-btn:hover { background-color: #c82333; }
+        .info-btn { background-color: #17a2b8; }
+        .info-btn:hover { background-color: #138496; }
+        #logoutBtn { display: none; margin-top: 15px; }
+        .status-message { margin-top: 10px; padding: 12px; border-radius: 4px; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .hidden { display: none; }
+        .team-list li { padding: 5px 0; }
+        .match-type { font-weight: bold; color: #fd7e14; }
+        .vs { font-weight: bold; color: #6f42c1; }
+        .score-input { width: 60px !important; text-align: center; }
+        .flex-container { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end;}
+        .flex-item { flex-grow: 1; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestor Liga CAÑAHUEQUEROS</h1>
+
+        <div class="login-section" id="loginSection">
+            <h2>Acceso Administrador</h2>
+            <input type="text" id="username" placeholder="Usuario" autocomplete="username">
+            <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password">
+            <button onclick="login()">Ingresar</button>
+            <p id="loginError" class="status-message error hidden"></p>
+        </div>
+
+        <div id="adminControls" class="hidden">
+            <button id="logoutBtn" onclick="logout()">Cerrar Sesión</button>
+            <div class="setup-section">
+                <h2>Configuración de la Liga (Admin)</h2>
+
+                <div id="teamManagementSection">
+                    <h3>Gestión de Equipos</h3>
+                    <div class="flex-container">
+                        <div class="flex-item">
+                            <label for="teamName">Nombre del Equipo:</label>
+                            <input type="text" id="teamName" placeholder="Ej: Los Tigres">
+                        </div>
+                        <button onclick="addTeam()">Agregar Equipo</button>
+                    </div>
+                    <h4>Equipos Registrados:</h4>
+                    <ul id="teamsList" class="team-list"></ul>
+                </div>
+                <hr>
+                <div id="scheduleGenerationSection">
+                    <h3>Generar Rol de Partidos (Ida y Vuelta)</h3>
+                    <p>Asegúrate de haber agregado todos los equipos (8-10 recomendados) antes de generar el rol. Los partidos se programarán para los domingos.</p>
+                    <div class="flex-container">
+                        <div class="flex-item">
+                            <label for="startDate">Fecha Primer Domingo de Jornada 1:</label>
+                            <input type="date" id="startDate">
+                        </div>
+                        <div class="flex-item">
+                             <label for="firstMatchTime">Hora Primer Partido del Domingo:</label>
+                            <input type="time" id="firstMatchTime" value="08:00">
+                        </div>
+                         <div class="flex-item">
+                            <label for="matchesPerDay">Partidos por Domingo de Jornada:</label>
+                            <input type="number" id="matchesPerDay" value="2" min="1">
+                        </div>
+                        <div class="flex-item">
+                            <label for="timeBetweenMatches">Intervalo entre partidos (minutos):</label>
+                            <input type="number" id="timeBetweenMatches" value="60" min="10">
+                        </div>
+                    </div>
+                    <button onclick="generateSchedule()" class="info-btn">Generar Jornadas (Ida y Vuelta)</button>
+                     <p id="scheduleGenStatus" class="status-message hidden"></p>
+                </div>
+                 <hr>
+                <button onclick="confirmResetData()" class="danger-btn" style="margin-top: 20px;">Reiniciar Todos los Datos de la Liga (¡CUIDADO!)</button>
+            </div>
+        </div>
+
+        <h2>Rol de Partidos y Resultados</h2>
+        <div id="scheduleView">
+            <!-- Los partidos se cargarán aquí -->
+        </div>
+
+        <h2>Tabla de Posiciones</h2>
+        <table id="standingsTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Equipo</th>
+                    <th>PJ</th>
+                    <th>PG</th>
+                    <th>PP</th>
+                    <th>PF</th>
+                    <th>PC</th>
+                    <th>DIF</th>
+                    <th>PTS</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN ---
+        const ADMIN_USER = "MFAVIEL";
+        const ADMIN_PASS = "Mfaviel1_";
+        const LOCAL_STORAGE_KEY_TEAMS = 'basketballLeagueTeamsCañahuequeros_v2';
+        const LOCAL_STORAGE_KEY_SCHEDULE = 'basketballLeagueScheduleCañahuequeros_v2';
+        const LOCAL_STORAGE_KEY_SETTINGS = 'basketballLeagueSettingsCañahuequeros_v2';
+
+        const MESES_ABREVIADOS = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]; // MODIFICADO: Array para meses
+
+        let isAdminLoggedIn = false;
+        let teamsData = [];
+        let scheduleData = [];
+        let scheduleSettings = {
+            startDate: '',
+            firstMatchTime: '08:00',
+            matchesPerDay: 2,
+            timeBetweenMatches: 60
+        };
+
+        // --- FUNCIONES DE UTILIDAD ---
+        function uuidv4() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function getNextSunday(dateString) {
+            const d = new Date(dateString + 'T00:00:00Z'); // Usar Z para UTC y evitar problemas de zona horaria en el cálculo
+            const day = d.getUTCDay(); // 0 para Domingo, 1 para Lunes, ... en UTC
+            const diff = day === 0 ? 0 : 7 - day;
+            d.setUTCDate(d.getUTCDate() + diff);
+            return d;
+        }
+
+        function formatDate_ddMMMyy(dateObj) { // MODIFICADO: Nueva función para formatear fecha
+            if (!(dateObj instanceof Date) || isNaN(dateObj)) {
+                return "Fecha Inválida";
+            }
+            const day = dateObj.getUTCDate().toString().padStart(2, '0');
+            const month = MESES_ABREVIADOS[dateObj.getUTCMonth()];
+            const year = dateObj.getUTCFullYear().toString().slice(-2);
+            return `${day}/${month}/${year}`;
+        }
+
+        // --- LOGIN ---
+        function login() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const loginError = document.getElementById('loginError');
+            if (user === ADMIN_USER && pass === ADMIN_PASS) {
+                isAdminLoggedIn = true;
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('adminControls').classList.remove('hidden');
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                loginError.classList.add('hidden');
+                renderAll();
+                showMessage('Inicio de sesión exitoso.', 'success', 'loginError', false);
+            } else {
+                loginError.textContent = 'Usuario o contraseña incorrectos.';
+                loginError.classList.remove('hidden');
+                isAdminLoggedIn = false;
+            }
+        }
+
+        function logout() {
+            isAdminLoggedIn = false;
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('adminControls').classList.add('hidden');
+            document.getElementById('logoutBtn').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            renderAll();
+            alert('Sesión cerrada.');
+        }
+
+        // --- GESTIÓN DE DATOS (localStorage) ---
+        function saveData() {
+            localStorage.setItem(LOCAL_STORAGE_KEY_TEAMS, JSON.stringify(teamsData));
+            localStorage.setItem(LOCAL_STORAGE_KEY_SCHEDULE, JSON.stringify(scheduleData));
+            localStorage.setItem(LOCAL_STORAGE_KEY_SETTINGS, JSON.stringify(scheduleSettings));
+        }
+
+        function loadData() {
+            const storedTeams = localStorage.getItem(LOCAL_STORAGE_KEY_TEAMS);
+            if (storedTeams) teamsData = JSON.parse(storedTeams);
+
+            const storedSchedule = localStorage.getItem(LOCAL_STORAGE_KEY_SCHEDULE);
+            if (storedSchedule) scheduleData = JSON.parse(storedSchedule);
+
+            const storedSettings = localStorage.getItem(LOCAL_STORAGE_KEY_SETTINGS);
+            if (storedSettings) {
+                 scheduleSettings = JSON.parse(storedSettings);
+            }
+        }
+        
+        function confirmResetData() {
+            if (confirm("¿Estás SEGURO de que quieres borrar TODOS los equipos y TODO el rol de partidos? Esta acción no se puede deshacer.")) {
+                teamsData = [];
+                scheduleData = [];
+                scheduleSettings = { startDate: '', firstMatchTime: '08:00', matchesPerDay: 2, timeBetweenMatches: 60 };
+                saveData();
+                 document.getElementById('teamName').value = '';
+                 document.getElementById('startDate').value = '';
+                 document.getElementById('firstMatchTime').value = '08:00';
+                 document.getElementById('matchesPerDay').value = 2;
+                 document.getElementById('timeBetweenMatches').value = 60;
+                renderAll();
+                alert("Todos los datos de la liga han sido reiniciados.");
+            }
+        }
+
+        // --- GESTIÓN DE EQUIPOS ---
+        function addTeam() {
+            if (!isAdminLoggedIn) return;
+            const teamNameInput = document.getElementById('teamName');
+            const name = teamNameInput.value.trim();
+            if (name && !teamsData.find(t => t.name.toLowerCase() === name.toLowerCase())) {
+                if (teamsData.length >= 10) {
+                    alert("Ya has alcanzado el máximo de 10 equipos.");
+                    return;
+                }
+                teamsData.push({ id: uuidv4(), name: name });
+                teamNameInput.value = '';
+                saveData();
+                renderTeamsList();
+                renderStandings();
+            } else if (!name) {
+                alert("El nombre del equipo no puede estar vacío.");
+            } else {
+                alert("Ese nombre de equipo ya existe.");
+            }
+        }
+
+        function renderTeamsList() {
+            const listElement = document.getElementById('teamsList');
+            listElement.innerHTML = '';
+            if (teamsData.length === 0) {
+                listElement.innerHTML = '<li>No hay equipos registrados.</li>';
+                return;
+            }
+            teamsData.forEach(team => {
+                const li = document.createElement('li');
+                li.textContent = team.name;
+                listElement.appendChild(li);
+            });
+        }
+
+        // --- GENERACIÓN DE ROL DE PARTIDOS ---
+        function generateSchedule() {
+            if (!isAdminLoggedIn) return;
+            if (teamsData.length < 2) {
+                showMessage("Necesitas al menos 2 equipos para generar un rol.", 'error', 'scheduleGenStatus');
+                return;
+            }
+            if (scheduleData.length > 0 && !confirm("Ya existe un rol de partidos. ¿Deseas sobreescribirlo?")) {
+                return;
+            }
+
+            scheduleSettings.startDate = document.getElementById('startDate').value;
+            scheduleSettings.firstMatchTime = document.getElementById('firstMatchTime').value;
+            scheduleSettings.matchesPerDay = parseInt(document.getElementById('matchesPerDay').value) || 1;
+            scheduleSettings.timeBetweenMatches = parseInt(document.getElementById('timeBetweenMatches').value) || 60;
+
+            if (!scheduleSettings.startDate || !scheduleSettings.firstMatchTime) {
+                showMessage("Por favor, especifica la fecha de inicio (será ajustada al próximo domingo si no lo es) y la hora del primer partido.", 'error', 'scheduleGenStatus');
+                return;
+            }
+            
+            scheduleData = [];
+            let localTeams = [...teamsData];
+            if (localTeams.length % 2 !== 0) {
+                localTeams.push({ id: "BYE_ID", name: "BYE" });
+            }
+
+            const numTeams = localTeams.length;
+            const numRounds = numTeams - 1;
+
+            let currentJourneyDateUTC = getNextSunday(scheduleSettings.startDate);
+
+            // Generar partidos de IDA
+            for (let round = 0; round < numRounds; round++) {
+                let currentMatchTimeForDay = new Date(
+                    Date.UTC(
+                        currentJourneyDateUTC.getUTCFullYear(),
+                        currentJourneyDateUTC.getUTCMonth(),
+                        currentJourneyDateUTC.getUTCDate(),
+                        parseInt(scheduleSettings.firstMatchTime.split(':')[0]),
+                        parseInt(scheduleSettings.firstMatchTime.split(':')[1])
+                    )
+                );
+
+                for (let i = 0; i < numTeams / 2; i++) {
+                    const teamA = localTeams[i];
+                    const teamB = localTeams[numTeams - 1 - i];
+
+                    if (teamA.id !== "BYE_ID" && teamB.id !== "BYE_ID") {
+                        scheduleData.push({
+                            id: uuidv4(),
+                            journey: round + 1,
+                            date: currentJourneyDateUTC.toISOString().split('T')[0], // Guardar solo YYYY-MM-DD
+                            time: currentMatchTimeForDay.toISOString().substring(11, 16), // Guardar HH:MM en UTC
+                            teamAId: teamA.id,
+                            teamBId: teamB.id,
+                            teamAName: teamA.name,
+                            teamBName: teamB.name,
+                            scoreA: null,
+                            scoreB: null,
+                            type: 'Regular (Ida)'
+                        });
+                        currentMatchTimeForDay.setUTCMinutes(currentMatchTimeForDay.getUTCMinutes() + scheduleSettings.timeBetweenMatches);
+                    }
+                }
+                localTeams.splice(1, 0, localTeams.pop());
+                if (round < numRounds -1 ) {
+                    currentJourneyDateUTC.setUTCDate(currentJourneyDateUTC.getUTCDate() + 7);
+                }
+            }
+            
+            const lastJourneyIda = numRounds;
+            currentJourneyDateUTC.setUTCDate(currentJourneyDateUTC.getUTCDate() + 7); 
+
+            localTeams = [...teamsData];
+            if (localTeams.length % 2 !== 0) {
+                localTeams.push({ id: "BYE_ID", name: "BYE" });
+            }
+
+            for (let round = 0; round < numRounds; round++) {
+                 let currentMatchTimeForDay = new Date(
+                    Date.UTC(
+                        currentJourneyDateUTC.getUTCFullYear(),
+                        currentJourneyDateUTC.getUTCMonth(),
+                        currentJourneyDateUTC.getUTCDate(),
+                        parseInt(scheduleSettings.firstMatchTime.split(':')[0]),
+                        parseInt(scheduleSettings.firstMatchTime.split(':')[1])
+                    )
+                );
+
+                for (let i = 0; i < numTeams / 2; i++) {
+                    const teamAOriginal = localTeams[i];
+                    const teamBOriginal = localTeams[numTeams - 1 - i];
+
+                    if (teamAOriginal.id !== "BYE_ID" && teamBOriginal.id !== "BYE_ID") {
+                         scheduleData.push({
+                            id: uuidv4(),
+                            journey: lastJourneyIda + round + 1,
+                            date: currentJourneyDateUTC.toISOString().split('T')[0],
+                            time: currentMatchTimeForDay.toISOString().substring(11, 16),
+                            teamAId: teamBOriginal.id,
+                            teamBId: teamAOriginal.id,
+                            teamAName: teamBOriginal.name,
+                            teamBName: teamAOriginal.name,
+                            scoreA: null,
+                            scoreB: null,
+                            type: 'Regular (Vuelta)'
+                        });
+                        currentMatchTimeForDay.setUTCMinutes(currentMatchTimeForDay.getUTCMinutes() + scheduleSettings.timeBetweenMatches);
+                    }
+                }
+                localTeams.splice(1, 0, localTeams.pop());
+                if (round < numRounds -1 ) {
+                    currentJourneyDateUTC.setUTCDate(currentJourneyDateUTC.getUTCDate() + 7);
+                }
+            }
+
+            saveData();
+            renderScheduleView();
+            renderStandings();
+            showMessage("Rol de partidos (Ida y Vuelta) generado para los domingos.", 'success', 'scheduleGenStatus');
+        }
+
+
+        // --- RENDERIZADO DE VISTAS ---
+        function renderScheduleView() {
+            const scheduleDiv = document.getElementById('scheduleView');
+            scheduleDiv.innerHTML = '';
+
+            if (scheduleData.length === 0) {
+                scheduleDiv.innerHTML = '<p>No hay partidos programados. El administrador debe generar el rol.</p>';
+                return;
+            }
+
+            const partidosPorJornada = scheduleData.reduce((acc, partido) => {
+                if (!acc[partido.journey]) acc[partido.journey] = [];
+                acc[partido.journey].push(partido);
+                return acc;
+            }, {});
+
+            Object.keys(partidosPorJornada).sort((a,b) => parseInt(a) - parseInt(b)).forEach(journeyNum => {
+                const journeyTitle = document.createElement('h3');
+                journeyTitle.textContent = `Jornada ${journeyNum}`;
+                scheduleDiv.appendChild(journeyTitle);
+
+                const table = document.createElement('table');
+                const thead = document.createElement('thead');
+                thead.innerHTML = `
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Tipo</th>
+                        <th>Equipo Local</th>
+                        <th>Resultado</th>
+                        <th>Equipo Visitante</th>
+                        ${isAdminLoggedIn ? '<th>Acción (Admin)</th>' : ''}
+                    </tr>
+                `;
+                table.appendChild(thead);
+                const tbody = document.createElement('tbody');
+
+                partidosPorJornada[journeyNum].sort((a,b) => {
+                    const dateA = new Date(a.date + 'T' + a.time + 'Z'); // Asumir UTC para comparación
+                    const dateB = new Date(b.date + 'T' + b.time + 'Z');
+                    return dateA - dateB;
+                }).forEach(match => {
+                    const row = tbody.insertRow();
+                    // MODIFICADO: Formato de fecha "dd/MMM/aa"
+                    const matchDateObj = new Date(match.date + 'T00:00:00Z'); // Crear objeto Date en UTC
+                    row.insertCell().textContent = formatDate_ddMMMyy(matchDateObj);
+                    
+                    // Formatear hora para mostrar en hora local (si se guardó en UTC)
+                    // O simplemente mostrar la hora guardada si se asume que es la hora local deseada
+                    let displayTime = match.time; // Asumir que la hora guardada es la deseada
+                    try {
+                        // Opcional: convertir de UTC a local para visualización
+                        const timeParts = match.time.split(':');
+                        const tempDateForTime = new Date();
+                        tempDateForTime.setUTCHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0, 0);
+                        displayTime = tempDateForTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                    } catch(e) { /* Mantener la hora original si hay error */ }
+                    row.insertCell().textContent = displayTime;
+
+                    row.insertCell().innerHTML = `<span class="match-type">${match.type}</span>`;
+                    row.insertCell().textContent = match.teamAName;
+
+                    const scoreCell = row.insertCell();
+                    if (match.scoreA !== null && match.scoreB !== null) {
+                        scoreCell.innerHTML = `${match.scoreA} <span class="vs">-</span> ${match.scoreB}`;
+                    } else {
+                        scoreCell.textContent = "Pendiente";
+                    }
+                    row.insertCell().textContent = match.teamBName;
+
+                    if (isAdminLoggedIn) {
+                        const adminCell = row.insertCell();
+                        if (match.teamAId === "BYE_ID" || match.teamBId === "BYE_ID") {
+                            adminCell.textContent = "Descanso";
+                        } else {
+                            const scoreAInput = document.createElement('input');
+                            scoreAInput.type = 'number'; scoreAInput.min = '0';
+                            scoreAInput.placeholder = 'L'; scoreAInput.value = match.scoreA ?? '';
+                            scoreAInput.classList.add('score-input'); scoreAInput.id = `scoreA_${match.id}`;
+
+                            const scoreBInput = document.createElement('input');
+                            scoreBInput.type = 'number'; scoreBInput.min = '0';
+                            scoreBInput.placeholder = 'V'; scoreBInput.value = match.scoreB ?? '';
+                            scoreBInput.classList.add('score-input'); scoreBInput.id = `scoreB_${match.id}`;
+
+                            const saveButton = document.createElement('button');
+                            saveButton.textContent = 'Guardar';
+                            saveButton.onclick = () => updateScore(match.id);
+                            
+                            adminCell.appendChild(scoreAInput);
+                            adminCell.appendChild(document.createTextNode(' - '));
+                            adminCell.appendChild(scoreBInput);
+                            adminCell.appendChild(saveButton);
+                        }
+                    }
+                });
+                table.appendChild(tbody);
+                scheduleDiv.appendChild(table);
+            });
+        }
+
+        function updateScore(matchId) {
+            if (!isAdminLoggedIn) return;
+            const match = scheduleData.find(m => m.id === matchId);
+            if (!match) return;
+
+            const scoreA = parseInt(document.getElementById(`scoreA_${matchId}`).value);
+            const scoreB = parseInt(document.getElementById(`scoreB_${matchId}`).value);
+
+            if (isNaN(scoreA) || isNaN(scoreB) || scoreA < 0 || scoreB < 0) {
+                alert('Por favor, ingrese marcadores válidos (números no negativos).');
+                return;
+            }
+            match.scoreA = scoreA;
+            match.scoreB = scoreB;
+            saveData();
+            renderScheduleView();
+            renderStandings();
+            alert(`Resultado para ${match.teamAName} vs ${match.teamBName} guardado.`);
+        }
+
+        function renderStandings() {
+            const stats = {};
+            teamsData.forEach(team => {
+                if (team.id !== "BYE_ID") {
+                    stats[team.id] = { name: team.name, PJ: 0, PG: 0, PP: 0, PF: 0, PC: 0, PTS: 0 };
+                }
+            });
+
+            scheduleData.forEach(match => {
+                if (match.scoreA !== null && match.scoreB !== null && match.teamAId !== "BYE_ID" && match.teamBId !== "BYE_ID") {
+                    if (!stats[match.teamAId] || !stats[match.teamBId]) return;
+
+                    const teamAStats = stats[match.teamAId];
+                    const teamBStats = stats[match.teamBId];
+                    
+                    teamAStats.PJ++;
+                    teamBStats.PJ++;
+                    teamAStats.PF += match.scoreA;
+                    teamAStats.PC += match.scoreB;
+                    teamBStats.PF += match.scoreB;
+                    teamBStats.PC += match.scoreA;
+
+                    if (match.scoreA > match.scoreB) {
+                        teamAStats.PG++; teamAStats.PTS += 3;
+                        teamBStats.PP++; teamBStats.PTS += 1;
+                    } else if (match.scoreB > match.scoreA) {
+                        teamBStats.PG++; teamBStats.PTS += 3;
+                        teamAStats.PP++; teamAStats.PTS += 1;
+                    }
+                }
+            });
+
+            const standingsArray = Object.values(stats).map(team => ({
+                ...team,
+                DIF: team.PF - team.PC
+            }));
+
+            standingsArray.sort((a, b) => {
+                if (b.PTS !== a.PTS) return b.PTS - a.PTS;
+                if (b.PF !== a.PF) return b.PF - a.PF;
+                return a.PC - b.PC;
+            });
+
+            const standingsBody = document.getElementById('standingsTable').getElementsByTagName('tbody')[0];
+            standingsBody.innerHTML = '';
+            standingsArray.forEach((team, index) => {
+                const row = standingsBody.insertRow();
+                row.insertCell().textContent = index + 1;
+                row.insertCell().textContent = team.name;
+                row.insertCell().textContent = team.PJ;
+                row.insertCell().textContent = team.PG;
+                row.insertCell().textContent = team.PP;
+                row.insertCell().textContent = team.PF;
+                row.insertCell().textContent = team.PC;
+                row.insertCell().textContent = team.DIF;
+                row.insertCell().textContent = team.PTS;
+            });
+        }
+
+        function showMessage(message, type = 'success', elementId = 'statusMessage', autoHide = true) {
+            const el = document.getElementById(elementId);
+            if(!el) {
+                console.warn(`Element with ID ${elementId} not found for message.`);
+                alert(`${type.toUpperCase()}: ${message}`);
+                return;
+            }
+            el.textContent = message;
+            el.className = `status-message ${type}`;
+            el.classList.remove('hidden');
+            if (autoHide) {
+                setTimeout(() => el.classList.add('hidden'), 4000);
+            }
+        }
+
+        function renderAll() {
+            renderTeamsList();
+            renderScheduleView();
+            renderStandings();
+        }
+
+        // --- INICIALIZACIÓN ---
+        window.onload = () => {
+            loadData();
+            document.getElementById('startDate').value = scheduleSettings.startDate || '';
+            document.getElementById('firstMatchTime').value = scheduleSettings.firstMatchTime || '08:00';
+            document.getElementById('matchesPerDay').value = scheduleSettings.matchesPerDay || 2;
+            document.getElementById('timeBetweenMatches').value = scheduleSettings.timeBetweenMatches || 60;
+            renderAll();
+        };
+    </script>
+</body>
+</html>
